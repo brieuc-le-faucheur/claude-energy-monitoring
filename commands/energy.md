@@ -1,6 +1,6 @@
 ---
 description: Rapport de consommation énergétique estimée des sessions Claude Code du jour
-argument-hint: [YYYY-MM-DD]
+argument-hint: [YYYY-MM-DD | 1h | 2d | 1w | 2m]
 allowed-tools: [Bash]
 ---
 

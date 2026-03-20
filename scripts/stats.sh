@@ -1,16 +1,41 @@
 #!/bin/bash
 # stats.sh — Rapport détaillé de consommation énergétique Claude Code.
-# Usage : bash stats.sh [YYYY-MM-DD]
+# Usage : bash stats.sh [YYYY-MM-DD | <n>h|d|w|m]
 
-DATE=${1:-$(date +%Y-%m-%d)}
-if [[ -n "$1" ]] && ! echo "$1" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
-  echo "Format de date invalide : $1 (attendu : YYYY-MM-DD)" >&2
-  exit 1
+MODE="date"
+DATE=$(date +%Y-%m-%d)
+SINCE=""
+LABEL=""
+
+if [[ -n "$1" ]]; then
+  if echo "$1" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+    DATE="$1"
+    LABEL="$DATE"
+  elif echo "$1" | grep -qE '^[0-9]+[hdwm]$'; then
+    MODE="duration"
+    AMOUNT=$(echo "$1" | grep -oE '^[0-9]+')
+    UNIT=$(echo "$1" | grep -oE '[hdwm]$')
+    NOW=$(date +%s)
+    case "$UNIT" in
+      h) SINCE=$((NOW - AMOUNT * 3600)) ;;
+      d) SINCE=$((NOW - AMOUNT * 86400)) ;;
+      w) SINCE=$((NOW - AMOUNT * 7 * 86400)) ;;
+      m) SINCE=$((NOW - AMOUNT * 30 * 86400)) ;;
+    esac
+    SINCE_LABEL=$(date -d "@$SINCE" +"%Y-%m-%d %H:%M" 2>/dev/null || date -r "$SINCE" +"%Y-%m-%d %H:%M")
+    LABEL="${1} (depuis $SINCE_LABEL)"
+  else
+    echo "Argument invalide : $1 (attendu : YYYY-MM-DD ou durée comme 1h, 2d, 1w, 2m)" >&2
+    exit 1
+  fi
+else
+  LABEL="$DATE"
 fi
+
 CLAUDE_DIR="$HOME/.claude/projects"
 
 echo "======================================"
-echo " Rapport Claude Code — $DATE"
+echo " Rapport Claude Code — $LABEL"
 echo "======================================"
 echo ""
 echo "  Méthodologie & sources :"
@@ -33,8 +58,13 @@ earliest=""
 latest=""
 
 while IFS= read -r -d '' file; do
-  file_date=$(date -r "$file" +%Y-%m-%d 2>/dev/null)
-  [[ "$file_date" != "$DATE" ]] && continue
+  file_mtime=$(date -r "$file" +%s 2>/dev/null)
+  if [[ "$MODE" == "date" ]]; then
+    file_date=$(date -d "@$file_mtime" +%Y-%m-%d 2>/dev/null || date -r "$file" +%Y-%m-%d 2>/dev/null)
+    [[ "$file_date" != "$DATE" ]] && continue
+  else
+    [[ -z "$file_mtime" || "$file_mtime" -lt "$SINCE" ]] && continue
+  fi
 
   session_id=$(basename "$file" .jsonl)
   project=$(basename "$(dirname "$file")")
@@ -63,7 +93,7 @@ while IFS= read -r -d '' file; do
   fi
 done < <(find "$CLAUDE_DIR" -name "*.jsonl" -print0 2>/dev/null)
 
-[[ "$total_messages" -eq 0 ]] && echo "" && echo "Aucune session trouvée pour $DATE." && echo "" && exit 0
+[[ "$total_messages" -eq 0 ]] && echo "" && echo "Aucune session trouvée pour $LABEL." && echo "" && exit 0
 
 time_from=$(date -d "@$earliest" +%H:%M 2>/dev/null || date -r "$earliest" +%H:%M)
 time_to=$(date -d "@$latest"   +%H:%M 2>/dev/null || date -r "$latest"   +%H:%M)
