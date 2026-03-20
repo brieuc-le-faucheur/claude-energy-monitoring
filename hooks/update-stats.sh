@@ -5,8 +5,15 @@
 sleep 1
 
 CACHE="$HOME/.claude/energy-monitor-cache.json"
+STATE_FILE="/tmp/.claude-energy-state"
 CLAUDE_DIR="$HOME/.claude/projects"
 TODAY=$(date +%Y-%m-%d)
+
+# Sauvegarde du compteur actuel avant mise à jour (pour le delta dans status.sh)
+if [[ -f "$CACHE" ]]; then
+  old_requests=$(grep -o '"requests":[0-9]*' "$CACHE" | head -1 | cut -d: -f2)
+  echo "$TODAY:${old_requests:-0}" > "$STATE_FILE"
+fi
 
 total_requests=0
 total_tokens_in=0

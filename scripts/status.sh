@@ -37,7 +37,7 @@ tokens_in=${tokens_in:-0}
 tokens_out=${tokens_out:-0}
 total_tokens=$((tokens_in + tokens_out))
 
-# Delta depuis le dernier prompt (via state file de summary.sh)
+# Delta depuis le dernier prompt (via state file de update-stats.sh)
 prev_count=0
 if [[ -f "$STATE_FILE" ]]; then
   state_line=$(cat "$STATE_FILE" 2>/dev/null)

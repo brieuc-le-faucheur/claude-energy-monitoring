@@ -16,10 +16,11 @@ PLUGIN_DEST="$HOME/.claude/plugins/marketplaces/claude-plugins-official/plugins/
 SETTINGS="$HOME/.claude/settings.json"
 COMMANDS_DIR="$HOME/.claude/commands"
 CACHE="$HOME/.claude/energy-monitor-cache.json"
+CLAUDE_MD="$HOME/.claude/CLAUDE.md"
+CLAUDE_MD_MARKER="# energy-monitor"
 
 STATUS_CMD="bash $PLUGIN_DEST/scripts/status.sh"
 HOOK_STATS="bash $PLUGIN_DEST/hooks/update-stats.sh"
-HOOK_SUMMARY="bash $PLUGIN_DEST/scripts/summary.sh"
 HOOK_INTERCEPT="bash $PLUGIN_DEST/hooks/intercept-energy.sh"
 
 echo "======================================"
@@ -51,8 +52,12 @@ echo ""
 
 # ── 1. Lien symbolique du plugin ──────────────────────────────────────────────
 mkdir -p "$(dirname "$PLUGIN_DEST")"
-if [[ -L "$PLUGIN_DEST" ]]; then
+if [[ -L "$PLUGIN_DEST" && "$(readlink "$PLUGIN_DEST")" == "$PLUGIN_SRC" ]]; then
   echo "✓ Plugin déjà lié : $PLUGIN_DEST"
+elif [[ -L "$PLUGIN_DEST" ]]; then
+  rm "$PLUGIN_DEST"
+  ln -s "$PLUGIN_SRC" "$PLUGIN_DEST"
+  echo "✓ Lien symbolique mis à jour : $PLUGIN_DEST"
 elif [[ -e "$PLUGIN_DEST" ]]; then
   echo "⚠ Un dossier existe déjà à $PLUGIN_DEST (pas un symlink)."
   echo "  Supprimez-le manuellement si vous voulez recréer le lien."
@@ -64,7 +69,6 @@ fi
 # ── 2. Rendre les scripts exécutables ────────────────────────────────────────
 chmod +x "$PLUGIN_SRC/scripts/status.sh" \
          "$PLUGIN_SRC/scripts/stats.sh" \
-         "$PLUGIN_SRC/scripts/summary.sh" \
          "$PLUGIN_SRC/hooks/update-stats.sh" \
          "$PLUGIN_SRC/hooks/intercept-energy.sh"
 echo "✓ Scripts rendus exécutables"
@@ -90,10 +94,7 @@ if ! command -v jq &>/dev/null; then
       { "hooks": [{ "type": "command", "command": "$HOOK_INTERCEPT", "timeout": 15 }] }
     ],
     "Stop": [
-      { "hooks": [
-          { "type": "command", "command": "$HOOK_STATS",   "timeout": 30 },
-          { "type": "command", "command": "$HOOK_SUMMARY", "timeout": 10 }
-      ]}
+      { "hooks": [{ "type": "command", "command": "$HOOK_STATS", "timeout": 30 }] }
     ]
   }
 }
@@ -105,9 +106,9 @@ fi
 
 _hook_present() {
   local event="$1" cmd="$2"
-  jq -e --arg cmd "$cmd" \
-    '(.hooks[$ENV.event] // []) | any(.hooks | any(.command == $cmd))' \
-    --arg event "$event" "$SETTINGS" &>/dev/null
+  jq -e --arg event "$event" --arg cmd "$cmd" \
+    '(.hooks[$event] // []) | any(.hooks | any(.command == $cmd))' \
+    "$SETTINGS" &>/dev/null
 }
 
 needs_update=false
@@ -117,14 +118,12 @@ current_status=$(jq -r '.statusLine.command // ""' "$SETTINGS")
 
 _hook_present "UserPromptSubmit" "$HOOK_INTERCEPT" || needs_update=true
 _hook_present "Stop"             "$HOOK_STATS"     || needs_update=true
-_hook_present "Stop"             "$HOOK_SUMMARY"   || needs_update=true
 
 if [[ "$needs_update" == true ]]; then
   tmp=$(mktemp)
   jq \
     --arg status    "$STATUS_CMD" \
     --arg stats     "$HOOK_STATS" \
-    --arg summary   "$HOOK_SUMMARY" \
     --arg intercept "$HOOK_INTERCEPT" \
     '
     .statusLine = {"type": "command", "command": $status} |
@@ -136,21 +135,28 @@ if [[ "$needs_update" == true ]]; then
     .hooks.Stop = (
       (.hooks.Stop // [])
       | map(select(.hooks | map(.command | test("energy-monitor")) | any | not))
-      + [{ "hooks": [
-          { "type": "command", "command": $stats,   "timeout": 30 },
-          { "type": "command", "command": $summary, "timeout": 10 }
-      ]}]
+      + [{ "hooks": [{ "type": "command", "command": $stats, "timeout": 30 }] }]
     )
     ' "$SETTINGS" > "$tmp" && mv "$tmp" "$SETTINGS"
 
   echo "✓ statusLine configuré"
   echo "✓ Hook UserPromptSubmit configuré (interception /energy sans token)"
-  echo "✓ Hook Stop configuré (résumé après chaque réponse)"
+  echo "✓ Hook Stop configuré (mise à jour du cache)"
 else
   echo "✓ settings.json déjà à jour (statusLine + hooks)"
 fi
 
-# ── 5. Initialisation du cache ───────────────────────────────────────────────
+# ── 5. Prompt dans ~/.claude/CLAUDE.md ───────────────────────────────────────
+touch "$CLAUDE_MD"
+if grep -q "^$CLAUDE_MD_MARKER" "$CLAUDE_MD" 2>/dev/null; then
+  echo "✓ Prompt energy-monitor déjà présent dans CLAUDE.md"
+else
+  printf '\n%s\nUtilise le skill `energy` pour afficher un rapport de consommation énergétique des sessions Claude Code du jour.\n' \
+    "$CLAUDE_MD_MARKER" >> "$CLAUDE_MD"
+  echo "✓ Prompt energy-monitor ajouté à $CLAUDE_MD"
+fi
+
+# ── 6. Initialisation du cache ───────────────────────────────────────────────
 if [[ ! -f "$CACHE" ]]; then
   printf '{"date":"","requests":0,"tokens_in":0,"tokens_out":0,"updated":""}\n' > "$CACHE"
   echo "✓ Cache initialisé"
@@ -164,7 +170,6 @@ echo ""
 echo "Redémarre Claude Code pour activer le plugin."
 echo ""
 echo "  • Barre de statut     → conso en temps réel"
-echo "  • Après chaque réponse → ⚡ Ce prompt ≈ Xm en voiture | Journée HH:MM–HH:MM : N req ≈ Y km"
 echo "  • /energy             → rapport détaillé du jour (0 token)"
 echo "  • /energy 2026-03-18  → rapport pour une date précise"
 echo ""
