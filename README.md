@@ -98,11 +98,29 @@ brew install jq
 
 > ⚠ Ces estimations sont approximatives. Elles ne tiennent pas compte du mix énergétique du datacenter (renouvelables vs fossiles), ni du refroidissement, ni de l'amortissement du matériel.
 
+## Mise à jour
+
+```bash
+bash energy-monitor/update.sh
+```
+
+Fait un `git pull` et ré-applique les étapes idempotentes (scripts, commande `/energy`, `settings.json`).
+Puis redémarrer Claude Code.
+
+## Désinstallation
+
+```bash
+bash energy-monitor/uninstall.sh          # conserve le cache
+bash energy-monitor/uninstall.sh --purge  # supprime aussi le cache
+```
+
 ## Structure
 
 ```
 energy-monitor/
 ├── install.sh                  # Script d'installation
+├── update.sh                   # Script de mise à jour
+├── uninstall.sh                # Script de désinstallation
 ├── .claude-plugin/
 │   └── plugin.json
 ├── commands/
