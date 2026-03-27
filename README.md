@@ -1,4 +1,4 @@
-# energy-monitor — plugin Claude Code
+# energy-monitoring — plugin Claude Code
 
 Estime la consommation énergétique de vos sessions Claude Code et l'exprime en kilomètres équivalents parcourus en voiture thermique.
 
@@ -6,7 +6,7 @@ Estime la consommation énergétique de vos sessions Claude Code et l'exprime en
 
 ## Aperçu
 
-![Aperçu energy-monitor](example.png)
+![Aperçu energy-monitoring](example.png)
 
 ## Ce que ça fait
 
@@ -50,8 +50,8 @@ Estime la consommation énergétique de vos sessions Claude Code et l'exprime en
 ## Installation
 
 ```bash
-git clone <url-du-repo> energy-monitor
-bash energy-monitor/install.sh
+git clone <url-du-repo> energy-monitoring
+bash energy-monitoring/install.sh
 ```
 
 Puis redémarrer Claude Code.
@@ -101,7 +101,7 @@ brew install jq
 ## Mise à jour
 
 ```bash
-bash energy-monitor/update.sh
+bash energy-monitoring/update.sh
 ```
 
 Fait un `git pull` et ré-applique les étapes idempotentes (scripts, commande `/energy`, `settings.json`).
@@ -110,14 +110,14 @@ Puis redémarrer Claude Code.
 ## Désinstallation
 
 ```bash
-bash energy-monitor/uninstall.sh          # conserve le cache
-bash energy-monitor/uninstall.sh --purge  # supprime aussi le cache
+bash energy-monitoring/uninstall.sh          # conserve le cache
+bash energy-monitoring/uninstall.sh --purge  # supprime aussi le cache
 ```
 
 ## Structure
 
 ```
-energy-monitor/
+energy-monitoring/
 ├── install.sh                  # Script d'installation
 ├── update.sh                   # Script de mise à jour
 ├── uninstall.sh                # Script de désinstallation

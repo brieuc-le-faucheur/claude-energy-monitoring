@@ -1,5 +1,5 @@
 {
-  "name": "energy-monitor",
+  "name": "energy-monitoring",
   "version": "1.1.0",
   "description": "Estime la consommation énergétique des sessions Claude Code et l'exprime en km équivalents voiture thermique. Affichage sous le champ d'écriture, rapport /energy sans token.",
   "author": {

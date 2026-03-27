@@ -12,7 +12,7 @@ Génère un rapport détaillé de consommation énergétique estimée pour les s
 
 1. Détermine le chemin du script :
    ```
-   PLUGIN_DIR="$HOME/.claude/plugins/marketplaces/claude-plugins-official/plugins/energy-monitor"
+   PLUGIN_DIR="$HOME/.claude/plugins/marketplaces/claude-plugins-official/plugins/energy-monitoring"
    SCRIPT="$PLUGIN_DIR/scripts/stats.sh"
    ```
 
@@ -27,5 +27,5 @@ Génère un rapport détaillé de consommation énergétique estimée pour les s
 
 3. Affiche le résultat tel quel, sans reformatage.
 
-4. Si le script n'existe pas, indique que le plugin `energy-monitor` n'est pas installé
+4. Si le script n'existe pas, indique que le plugin `energy-monitoring` n'est pas installé
    et renvoie l'utilisateur vers `install.sh`.

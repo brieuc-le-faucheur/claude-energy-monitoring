@@ -1,24 +1,24 @@
 #!/bin/bash
-# uninstall.sh — Désinstalle le plugin energy-monitor de Claude Code.
+# uninstall.sh — Désinstalle le plugin energy-monitoring de Claude Code.
 #
 # Actions :
 #   1. Supprime le lien symbolique du plugin
 #   2. Supprime la commande /energy de ~/.claude/commands/
-#   3. Retire statusLine + hooks energy-monitor de ~/.claude/settings.json
-#   4. Retire le prompt energy-monitor de ~/.claude/CLAUDE.md
+#   3. Retire statusLine + hooks energy-monitoring de ~/.claude/settings.json
+#   4. Retire le prompt energy-monitoring de ~/.claude/CLAUDE.md
 #   5. Supprime le cache et le state file (uniquement avec --purge)
 #
 # Usage :
 #   ./uninstall.sh           # désinstalle, conserve le cache
 #   ./uninstall.sh --purge   # désinstalle et supprime le cache
 
-PLUGIN_NAME="energy-monitor"
+PLUGIN_NAME="energy-monitoring"
 PLUGIN_DEST="$HOME/.claude/plugins/marketplaces/claude-plugins-official/plugins/$PLUGIN_NAME"
 SETTINGS="$HOME/.claude/settings.json"
 COMMANDS_DIR="$HOME/.claude/commands"
-CACHE="$HOME/.claude/energy-monitor-cache.json"
+CACHE="$HOME/.claude/energy-monitoring-cache.json"
 CLAUDE_MD="$HOME/.claude/CLAUDE.md"
-CLAUDE_MD_MARKER="# energy-monitor"
+CLAUDE_MD_MARKER="# energy-monitoring"
 STATE_FILE="/tmp/.claude-energy-state"
 
 PURGE=false
@@ -27,7 +27,7 @@ PURGE=false
 errors=0
 
 echo "======================================"
-echo " Désinstallation energy-monitor"
+echo " Désinstallation energy-monitoring"
 echo "======================================"
 echo ""
 
@@ -55,28 +55,28 @@ if [[ ! -f "$SETTINGS" ]]; then
   echo "✓ settings.json absent — rien à nettoyer"
 elif ! command -v jq &>/dev/null; then
   echo "⚠ jq non trouvé — retirez manuellement de $SETTINGS :"
-  echo "   • statusLine (si valeur contient \"energy-monitor\")"
-  echo "   • hooks UserPromptSubmit et Stop contenant \"energy-monitor\""
+  echo "   • statusLine (si valeur contient \"energy-monitoring\")"
+  echo "   • hooks UserPromptSubmit et Stop contenant \"energy-monitoring\""
   (( errors++ )) || true
 else
   current_status=$(jq -r '.statusLine.command // ""' "$SETTINGS")
 
   tmp=$(mktemp)
   jq '
-    if ((.statusLine.command // "") | test("energy-monitor")) then
+    if ((.statusLine.command // "") | test("energy-monitoring")) then
       del(.statusLine)
     else . end |
 
     if .hooks.UserPromptSubmit then
       .hooks.UserPromptSubmit |= map(
-        select(.hooks | map(.command | test("energy-monitor")) | any | not)
+        select(.hooks | map(.command | test("energy-monitoring")) | any | not)
       )
       | if (.hooks.UserPromptSubmit | length) == 0 then del(.hooks.UserPromptSubmit) else . end
     else . end |
 
     if .hooks.Stop then
       .hooks.Stop |= map(
-        select(.hooks | map(.command | test("energy-monitor")) | any | not)
+        select(.hooks | map(.command | test("energy-monitoring")) | any | not)
       )
       | if (.hooks.Stop | length) == 0 then del(.hooks.Stop) else . end
     else . end |
@@ -84,12 +84,12 @@ else
     if .hooks == {} then del(.hooks) else . end
   ' "$SETTINGS" > "$tmp" && mv "$tmp" "$SETTINGS"
 
-  if [[ "$current_status" == *"energy-monitor"* ]]; then
+  if [[ "$current_status" == *"energy-monitoring"* ]]; then
     echo "✓ statusLine retiré"
   else
     echo "✓ statusLine inchangé (n'appartenait pas au plugin)"
   fi
-  echo "✓ Hooks energy-monitor retirés de settings.json"
+  echo "✓ Hooks energy-monitoring retirés de settings.json"
 fi
 
 # ── 4. Prompt CLAUDE.md ───────────────────────────────────────────────────────
@@ -105,9 +105,9 @@ if [[ -f "$CLAUDE_MD" ]] && grep -q "^$CLAUDE_MD_MARKER" "$CLAUDE_MD" 2>/dev/nul
     }
     END { printf \"%s\", pending }
   " "$CLAUDE_MD" > "$tmp" && mv "$tmp" "$CLAUDE_MD"
-  echo "✓ Prompt energy-monitor retiré de $CLAUDE_MD"
+  echo "✓ Prompt energy-monitoring retiré de $CLAUDE_MD"
 else
-  echo "✓ Prompt energy-monitor déjà absent de $CLAUDE_MD"
+  echo "✓ Prompt energy-monitoring déjà absent de $CLAUDE_MD"
 fi
 
 # ── 5. Cache et state file ────────────────────────────────────────────────────

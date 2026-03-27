@@ -1,5 +1,5 @@
 #!/bin/bash
-# install.sh — Installe le plugin energy-monitor dans Claude Code.
+# install.sh — Installe le plugin energy-monitoring dans Claude Code.
 #
 # Prérequis : Claude Code >= 2.1.0 (statusLine object dans settings.json)
 #
@@ -11,20 +11,20 @@
 set -e
 
 PLUGIN_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PLUGIN_NAME="energy-monitor"
+PLUGIN_NAME="energy-monitoring"
 PLUGIN_DEST="$HOME/.claude/plugins/marketplaces/claude-plugins-official/plugins/$PLUGIN_NAME"
 SETTINGS="$HOME/.claude/settings.json"
 COMMANDS_DIR="$HOME/.claude/commands"
-CACHE="$HOME/.claude/energy-monitor-cache.json"
+CACHE="$HOME/.claude/energy-monitoring-cache.json"
 CLAUDE_MD="$HOME/.claude/CLAUDE.md"
-CLAUDE_MD_MARKER="# energy-monitor"
+CLAUDE_MD_MARKER="# energy-monitoring"
 
-STATUS_CMD="bash $PLUGIN_DEST/scripts/status.sh"
-HOOK_STATS="bash $PLUGIN_DEST/hooks/update-stats.sh"
-HOOK_INTERCEPT="bash $PLUGIN_DEST/hooks/intercept-energy.sh"
+STATUS_CMD="[ -f $PLUGIN_DEST/scripts/status.sh ] && bash $PLUGIN_DEST/scripts/status.sh || echo '⚠ energy-monitoring KO'"
+HOOK_STATS="[ -f $PLUGIN_DEST/hooks/update-stats.sh ] && bash $PLUGIN_DEST/hooks/update-stats.sh || echo '⚠ energy-monitoring: lien symbolique cassé. Relancez install.sh depuis le repo energy-extension.'"
+HOOK_INTERCEPT="[ -f $PLUGIN_DEST/hooks/intercept-energy.sh ] && bash $PLUGIN_DEST/hooks/intercept-energy.sh || echo '⚠ energy-monitoring: lien symbolique cassé. Relancez install.sh depuis le repo energy-extension.'"
 
 echo "======================================"
-echo " Installation energy-monitor"
+echo " Installation energy-monitoring"
 echo "======================================"
 echo ""
 
@@ -129,12 +129,12 @@ if [[ "$needs_update" == true ]]; then
     .statusLine = {"type": "command", "command": $status} |
     .hooks.UserPromptSubmit = (
       (.hooks.UserPromptSubmit // [])
-      | map(select(.hooks | map(.command | test("energy-monitor")) | any | not))
+      | map(select(.hooks | map(.command | test("energy-monitoring")) | any | not))
       + [{ "hooks": [{ "type": "command", "command": $intercept, "timeout": 15 }] }]
     ) |
     .hooks.Stop = (
       (.hooks.Stop // [])
-      | map(select(.hooks | map(.command | test("energy-monitor")) | any | not))
+      | map(select(.hooks | map(.command | test("energy-monitoring")) | any | not))
       + [{ "hooks": [{ "type": "command", "command": $stats, "timeout": 30 }] }]
     )
     ' "$SETTINGS" > "$tmp" && mv "$tmp" "$SETTINGS"
@@ -149,11 +149,11 @@ fi
 # ── 5. Prompt dans ~/.claude/CLAUDE.md ───────────────────────────────────────
 touch "$CLAUDE_MD"
 if grep -q "^$CLAUDE_MD_MARKER" "$CLAUDE_MD" 2>/dev/null; then
-  echo "✓ Prompt energy-monitor déjà présent dans CLAUDE.md"
+  echo "✓ Prompt energy-monitoring déjà présent dans CLAUDE.md"
 else
   printf '\n%s\nUtilise le skill `energy` pour afficher un rapport de consommation énergétique des sessions Claude Code du jour.\n' \
     "$CLAUDE_MD_MARKER" >> "$CLAUDE_MD"
-  echo "✓ Prompt energy-monitor ajouté à $CLAUDE_MD"
+  echo "✓ Prompt energy-monitoring ajouté à $CLAUDE_MD"
 fi
 
 # ── 6. Initialisation du cache ───────────────────────────────────────────────

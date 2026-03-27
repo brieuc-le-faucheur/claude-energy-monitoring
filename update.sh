@@ -1,5 +1,5 @@
 #!/bin/bash
-# update.sh — Met à jour le plugin energy-monitor via git pull.
+# update.sh — Met à jour le plugin energy-monitoring via git pull.
 #
 # Usage : bash update.sh
 #
@@ -12,17 +12,17 @@
 set -e
 
 PLUGIN_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PLUGIN_NAME="energy-monitor"
+PLUGIN_NAME="energy-monitoring"
 PLUGIN_DEST="$HOME/.claude/plugins/marketplaces/claude-plugins-official/plugins/$PLUGIN_NAME"
 SETTINGS="$HOME/.claude/settings.json"
 COMMANDS_DIR="$HOME/.claude/commands"
 
-STATUS_CMD="bash $PLUGIN_DEST/scripts/status.sh"
-HOOK_STATS="bash $PLUGIN_DEST/hooks/update-stats.sh"
-HOOK_INTERCEPT="bash $PLUGIN_DEST/hooks/intercept-energy.sh"
+STATUS_CMD="[ -f $PLUGIN_DEST/scripts/status.sh ] && bash $PLUGIN_DEST/scripts/status.sh || echo '⚠ energy-monitoring KO'"
+HOOK_STATS="[ -f $PLUGIN_DEST/hooks/update-stats.sh ] && bash $PLUGIN_DEST/hooks/update-stats.sh || echo '⚠ energy-monitoring: lien symbolique cassé. Relancez install.sh depuis le repo energy-extension.'"
+HOOK_INTERCEPT="[ -f $PLUGIN_DEST/hooks/intercept-energy.sh ] && bash $PLUGIN_DEST/hooks/intercept-energy.sh || echo '⚠ energy-monitoring: lien symbolique cassé. Relancez install.sh depuis le repo energy-extension.'"
 
 echo "======================================"
-echo " Mise à jour energy-monitor"
+echo " Mise à jour energy-monitoring"
 echo "======================================"
 echo ""
 
@@ -115,12 +115,12 @@ else
       .statusLine = {"type": "command", "command": $status} |
       .hooks.UserPromptSubmit = (
         (.hooks.UserPromptSubmit // [])
-        | map(select(.hooks | map(.command | test("energy-monitor")) | any | not))
+        | map(select(.hooks | map(.command | test("energy-monitoring")) | any | not))
         + [{ "hooks": [{ "type": "command", "command": $intercept, "timeout": 15 }] }]
       ) |
       .hooks.Stop = (
         (.hooks.Stop // [])
-        | map(select(.hooks | map(.command | test("energy-monitor")) | any | not))
+        | map(select(.hooks | map(.command | test("energy-monitoring")) | any | not))
         + [{ "hooks": [{ "type": "command", "command": $stats, "timeout": 30 }] }]
       )
       ' "$SETTINGS" > "$tmp" && mv "$tmp" "$SETTINGS"
