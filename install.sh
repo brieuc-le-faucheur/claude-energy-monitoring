@@ -129,12 +129,12 @@ if [[ "$needs_update" == true ]]; then
     .statusLine = {"type": "command", "command": $status} |
     .hooks.UserPromptSubmit = (
       (.hooks.UserPromptSubmit // [])
-      | map(select(.hooks | map(.command | test("energy-monitoring")) | any | not))
+      | map(select(.hooks | map(.command | test("energy-monitor")) | any | not))
       + [{ "hooks": [{ "type": "command", "command": $intercept, "timeout": 15 }] }]
     ) |
     .hooks.Stop = (
       (.hooks.Stop // [])
-      | map(select(.hooks | map(.command | test("energy-monitoring")) | any | not))
+      | map(select(.hooks | map(.command | test("energy-monitor")) | any | not))
       + [{ "hooks": [{ "type": "command", "command": $stats, "timeout": 30 }] }]
     )
     ' "$SETTINGS" > "$tmp" && mv "$tmp" "$SETTINGS"
