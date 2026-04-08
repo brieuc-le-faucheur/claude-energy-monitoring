@@ -12,7 +12,7 @@ set -e
 
 PLUGIN_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_NAME="energy-monitoring"
-PLUGIN_DEST="$HOME/.claude/plugins/marketplaces/claude-plugins-official/plugins/$PLUGIN_NAME"
+PLUGIN_DEST="$HOME/.claude/plugins/custom/$PLUGIN_NAME"
 SETTINGS="$HOME/.claude/settings.json"
 COMMANDS_DIR="$HOME/.claude/commands"
 CACHE="$HOME/.claude/energy-monitoring-cache.json"
@@ -51,6 +51,13 @@ fi
 echo ""
 
 # ── 1. Lien symbolique du plugin ──────────────────────────────────────────────
+# Nettoyage de l'ancien emplacement (marketplace géré par Claude Code)
+OLD_DEST="$HOME/.claude/plugins/marketplaces/claude-plugins-official/plugins/$PLUGIN_NAME"
+if [[ -L "$OLD_DEST" ]]; then
+  rm "$OLD_DEST"
+  echo "✓ Ancien lien symbolique supprimé (marketplace → custom)"
+fi
+
 mkdir -p "$(dirname "$PLUGIN_DEST")"
 if [[ -L "$PLUGIN_DEST" && "$(readlink "$PLUGIN_DEST")" == "$PLUGIN_SRC" ]]; then
   echo "✓ Plugin déjà lié : $PLUGIN_DEST"
